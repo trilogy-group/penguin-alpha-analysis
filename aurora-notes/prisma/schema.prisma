@@ -10,116 +10,116 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model 使用者 {
+model User {
   id            String    @id @default(cuid())
-  電子郵件      String    @unique
-  使用者名稱    String    @unique
-  密碼          String?
-  頭像          String?
-  簡介          String?
-  網站          String?
-  建立時間      DateTime  @default(now())
-  更新時間      DateTime  @updatedAt
-  文章          文章[]
-  帳戶          帳戶[]
-  會話          會話[]
+  email         String    @unique
+  username      String    @unique
+  password      String?
+  avatar        String?
+  bio           String?
+  website       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  posts         Post[]
+  accounts      Account[]
+  sessions      Session[]
 
   @@map("使用者")
 }
 
-model 帳戶 {
+model Account {
   id                String  @id @default(cuid())
-  使用者Id          String
-  類型              String
-  提供者            String
-  提供者帳戶Id      String
-  刷新令牌          String? @db.Text
-  存取令牌          String? @db.Text
-  令牌過期時間      DateTime?
-  範圍              String?
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refreshToken      String? @db.Text
+  accessToken       String? @db.Text
+  expiresAt         DateTime?
+  scope             String?
 
-  使用者 使用者 @relation(fields: [使用者Id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([提供者, 提供者帳戶Id])
+  @@unique([provider, providerAccountId])
   @@map("帳戶")
 }
 
-model 會話 {
+model Session {
   id           String   @id @default(cuid())
-  會話令牌     String   @unique
-  使用者Id     String
-  過期時間     DateTime
-  使用者       使用者   @relation(fields: [使用者Id], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("會話")
 }
 
-model 驗證令牌 {
+model VerificationToken {
   id         String   @id @default(cuid())
-  識別碼     String   @unique
-  令牌       String   @unique
-  過期時間   DateTime
-  使用者Id   String?
+  identifier String   @unique
+  token      String   @unique
+  expires    DateTime
+  userId     String?
 
   @@map("驗證令牌")
 }
 
-model 文章 {
+model Post {
   id          String   @id @default(cuid())
-  標題        String
-  內容        String   @db.Text
-  摘要        String?
-  封面圖片    String?
-  已發布      Boolean  @default(false)
-  閱讀時間    Int      @default(1)
-  瀏覽次數    Int      @default(0)
-  喜歡次數    Int      @default(0)
-  建立時間    DateTime @default(now())
-  更新時間    DateTime @updatedAt
-  發布時間    DateTime?
-  作者Id      String
-  作者        使用者   @relation(fields: [作者Id], references: [id])
-  標籤        文章標籤[]
-  評論        評論[]
+  title       String
+  content     String   @db.Text
+  excerpt     String?
+  coverImage  String?
+  published   Boolean  @default(false)
+  readingTime Int      @default(1)
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  tags        PostTag[]
+  comments    Comment[]
 
   @@map("文章")
 }
 
-model 標籤 {
+model Tag {
   id          String     @id @default(cuid())
-  名稱        String     @unique
-  描述        String?
-  顏色        String?
-  建立時間    DateTime   @default(now())
-  更新時間    DateTime   @updatedAt
-  文章        文章標籤[]
+  name        String     @unique
+  description String?
+  color       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  posts       PostTag[]
 
   @@map("標籤")
 }
 
-model 文章標籤 {
-  文章Id  String
-  標籤Id  String
-  建立時間 DateTime @default(now())
+model PostTag {
+  postId   String
+  tagId    String
+  createdAt DateTime @default(now())
 
-  文章 文章 @relation(fields: [文章Id], references: [id], onDelete: Cascade)
-  標籤 標籤 @relation(fields: [標籤Id], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@id([文章Id, 標籤Id])
+  @@id([postId, tagId])
   @@map("文章標籤")
 }
 
-model 評論 {
+model Comment {
   id        String   @id @default(cuid())
-  內容      String   @db.Text
-  建立時間  DateTime @default(now())
-  更新時間  DateTime @updatedAt
-  文章Id    String
-  作者Id    String
-  文章      文章     @relation(fields: [文章Id], references: [id], onDelete: Cascade)
-  父評論Id  String?
-  父評論    評論?    @relation("評論回覆", fields: [父評論Id], references: [id])
-  子評論    評論[]   @relation("評論回覆")
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  postId    String
+  authorId  String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
 
   @@map("評論")
 }
